@@ -71,7 +71,7 @@ an denselben Spieledateien sind deshalb zwischen beiden Versionen sichtbar.
 
 ## Funktionsprüfung auf dem Desktop
 
-Für den nächsten Release vorbereitet (noch nicht veröffentlicht): Cover wachsen
+Ab Preview v0.2.0: Cover wachsen
 beim Überfahren mit der Maus in etwa 180 ms auf 108 %, bleiben dort und schrumpfen
 beim Verlassen wieder. Die Rastergeometrie bleibt dabei stabil. Mausrad-Schritte
 werden über etwa 160 ms interpoliert; Touchpad-Gesten und horizontales Scrollen
@@ -79,8 +79,10 @@ verwenden weiterhin GTKs native Verarbeitung. Scrollbar und Tastatur können ein
 laufenden Mausrad-Übergang sofort unterbrechen. Wenn Animationen systemweit
 abgeschaltet sind, erfolgt der Hover-Wechsel sofort und das Scrollen bleibt nativ.
 
-Die Logo-Konvertierung wird mit `python3 utils/update_branding.py ORIGINAL.png`
-ausgeführt, sobald die Originaldatei vorliegt. Das Werkzeug ersetzt die bestehenden
+Das neue Logo wurde aus der transparenten Original-PNG übernommen. Die Quelle
+liegt unter `packaging/branding/logo-source.png`. Erneutes Erzeugen aller Varianten:
+`python3 utils/update_branding.py packaging/branding/logo-source.png`.
+Das Werkzeug ersetzt die bestehenden
 App-/Dateityp-Icons sowie Logo-, Platzhalter- und Splash-Dateien. PNGs behalten ihre
 jeweiligen Größen und RGBA-Kodierung; SVGs behalten ihre ursprünglichen Abmessungen
 und enthalten das Originalbild als eingebettetes PNG. Rasterbilder werden dabei
@@ -121,8 +123,8 @@ werden; dafür wurden keine Zugangsdaten angefordert oder eingebaut.
 
 In der Cloud wurden die echte GTK-Ansicht mit lokalen und simulierten GOG-/Epic-
 Katalogeinträgen, plattformübergreifende Identitäten, Filter und Aktionsauflösung geprüft.
-Die ausführbare Testsuite umfasst 676 Tests: 675 bestanden, einer übersprungen.
-Ruff, Formatprüfung, Mypy (368 Python-Dateien), Meson-Build und beide Meson-Tests
+Die ausführbare Testsuite umfasst 687 Tests: 686 bestanden, einer übersprungen.
+Ruff, Formatprüfung, Mypy (372 Python-Dateien), Meson-Build und beide Meson-Tests
 waren erfolgreich. In der echten GTK-Ansicht wurden zusätzlich der Installationsfilter,
 das Zurückschalten auf alle Spiele und der Wechsel zur Listenansicht geprüft.
 Der Flatpak-Manifestgenerator wurde mit Tests und dem Manifestparser von

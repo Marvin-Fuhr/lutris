@@ -347,3 +347,8 @@ def load_icon_theme() -> None:
     local_theme_path = os.path.join(settings.RUNTIME_DIR, "icons")
     if local_theme_path not in icon_theme.get_search_path():
         icon_theme.prepend_search_path(local_theme_path)
+    # Branding belongs to the fork, not to downloadable runtime icon packs.
+    # Use the same packaged assets when running from the source checkout.
+    packaged_theme_path = os.path.normpath(os.path.join(datapath.get(), "..", "icons"))
+    if os.path.isdir(packaged_theme_path) and packaged_theme_path not in icon_theme.get_search_path():
+        icon_theme.prepend_search_path(packaged_theme_path)

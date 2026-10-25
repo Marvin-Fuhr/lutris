@@ -1,6 +1,8 @@
 """Keep the preview isolated while retaining the upstream Flatpak dependencies."""
 
 import importlib.util
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -45,3 +47,32 @@ class FlatpakManifestTest(unittest.TestCase):
         sources = manifest["modules"][0]["sources"]
         self.assertEqual({entry["dest"] for entry in sources}, {"bin", "lutris", "share", "packaging/flatpak"})
         self.assertNotIn("/checkout", {entry["path"] for entry in sources})
+
+    def test_branding_replaces_base_icons_and_exports_png_sizes_for_preview_id(self):
+        commands = prepare.make_manifest(METADATA, Path("/checkout"))["modules"][0]["build-commands"]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            destination = root / "app/share/icons"
+            destination.mkdir(parents=True)
+            for size in ("16x16", "128x128", "scalable"):
+                suffix = ".svg" if size == "scalable" else ".png"
+                relative = Path("hicolor") / size / "apps" / ("net.lutris.Lutris" + suffix)
+                source = root / "share/icons" / relative
+                source.parent.mkdir(parents=True)
+                source.write_bytes(b"new branding " + size.encode())
+                old = destination / relative
+                old.parent.mkdir(parents=True)
+                old.write_bytes(b"old base icon")
+            for command in commands:
+                if command.startswith(
+                    ("cp -a share/icons/", "for icon in share/icons/", "install -Dm644 share/icons/")
+                ):
+                    subprocess.run(command.replace("/app/", str(root / "app") + "/"), cwd=root, shell=True, check=True)
+            for size in ("16x16", "128x128", "scalable"):
+                suffix = ".svg" if size == "scalable" else ".png"
+                directory = destination / "hicolor" / size / "apps"
+                self.assertEqual((directory / (prepare.APP_ID + suffix)).read_bytes(), b"new branding " + size.encode())
+                self.assertEqual(
+                    (directory / ("net.lutris.Lutris" + suffix)).read_bytes(), b"new branding " + size.encode()
+                )
+        self.assertIn("gtk-update-icon-cache -f -t /app/share/icons/hicolor", commands)

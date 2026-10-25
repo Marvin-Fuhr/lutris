@@ -1,18 +1,21 @@
-Desktop-Vorschau des Lutris-Forks mit dunkler Bibliothek und hochkantigen Cover-Kacheln.
+Neue Vorschau mit animierter Rasterbibliothek und neuem Logo.
 
-- Gemeinsame Bibliothek für lokale Spiele und synchronisierte Kataloge angemeldeter Konten, einschließlich nicht installierter Spiele.
-- Quellen- und Installationsanzeige, Installationsfilter und Aktualisierung verbundener Bibliotheken.
-- Eigene Flatpak-App-ID: `io.github.MarvinFuhr.LutrisLibrary`; bestehendes Lutris und dessen Kontodaten werden nicht ersetzt.
+- Cover wachsen beim Überfahren mit der Maus weich auf 108 %, bleiben vergrößert und schrumpfen beim Verlassen zurück. Das Raster verschiebt sich dabei nicht.
+- Mausrad-Scrolling erhält einen kurzen Übergang. Touchpad-Gesten, Scrollbar und Tastatur bleiben direkt bedienbar. Die Systemeinstellung für reduzierte Animationen wird respektiert.
+- Neues Logo aus der gelieferten Original-PNG: App-, Tray- und Dateityp-Icons, Info-Dialog, Platzhalter und Splash-Grafiken. Alle vorhandenen Größen und Transparenz bleiben erhalten. Die SVG-Dateien betten die PNG verlustfrei ein; sie sind keine nachgezeichneten Vektorgrafiken.
+- Bestehende Konten, Spiele, Runner, Installer und die gemeinsame Bibliothek bleiben erhalten.
 
-Installation (Linux x86_64): `LutrisLibrary.flatpak` unten unter Assets herunterladen und mit GNOME Software/KDE Discover öffnen oder im Download-Verzeichnis ausführen:
+## Installieren oder aktualisieren
+
+`LutrisLibrary.flatpak` unter **Assets** herunterladen und mit GNOME Software/KDE Discover öffnen. Alternativ im Download-Verzeichnis:
 
 ```sh
 flatpak install --user ./LutrisLibrary.flatpak
 flatpak run io.github.MarvinFuhr.LutrisLibrary
 ```
 
-Fehlende Laufzeitbibliotheken werden von Flathub geladen. Die Plattformkonten müssen in der Vorschau erneut angemeldet werden.
+Die App-ID bleibt `io.github.MarvinFuhr.LutrisLibrary`. Beim Aktualisieren dieser Vorschau bleiben ihre Einstellungen und Kontodaten erhalten. Die offizielle Lutris-Installation wird nicht ersetzt. Fehlende Laufzeitbibliotheken werden von Flathub geladen.
 
-Geprüft: Installation aus dem Bundle, Versionsabfrage, Datenbankinitialisierung und grafischer Start innerhalb von Flatpak; 675 Tests bestanden, einer übersprungen; Ruff, Formatprüfung, Mypy und Meson erfolgreich. Dialogtests sind wie in CI ausgeschlossen. Die Prozess-Wrapper-Tests sind wegen einer Einschränkung der Cloud-Laufzeit nicht als bestanden gewertet. Tatsächliche Spieleinstallationen und die Vollständigkeit persönlicher Kontobibliotheken sind auf dem Zielsystem zu prüfen. Die bestehenden API-Grenzen der Plattformen gelten weiterhin.
+Validierung: 686 Tests bestanden, einer übersprungen; zusätzliche GTK-Tests für Hover, Richtungswechsel, Scrollgrenzen, Touchpad-/Scrollbar-Unterbrechung und reduzierte Animationen. Ruff und Mypy fehlerfrei. Die vorhandenen Dialogtests sind wie in CI ausgeschlossen; die Prozess-Wrapper-Tests können in der Cloud-Laufzeit mangels `/proc/.../children` nicht sinnvoll ausgeführt werden. Reale Spiele- und Kontotests erfolgen auf dem Zielsystem.
 
 SHA-256: siehe `LutrisLibrary.flatpak.sha256` unter Assets.

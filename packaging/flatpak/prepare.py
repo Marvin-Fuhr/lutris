@@ -71,12 +71,19 @@ def make_manifest(metadata, source_path):
                     "mkdir -p /app/lib/lutris-library /app/bin",
                     "cp -a bin lutris share /app/lib/lutris-library/",
                     "cp -a share/lutris/. /app/share/lutris/",
+                    "cp -a share/icons/. /app/share/icons/",
                     "install -Dm755 packaging/flatpak/lutris-library /app/bin/lutris-library",
                     f"install -Dm644 packaging/flatpak/{APP_ID}.desktop /app/share/applications/{APP_ID}.desktop",
                     (
                         "install -Dm644 share/icons/hicolor/scalable/apps/net.lutris.Lutris.svg "
                         f"/app/share/icons/hicolor/scalable/apps/{APP_ID}.svg"
                     ),
+                    (
+                        "for icon in share/icons/hicolor/*/apps/net.lutris.Lutris.png; do "
+                        "size=${icon#share/icons/hicolor/}; size=${size%%/*}; "
+                        f'install -Dm644 "$icon" "/app/share/icons/hicolor/${{size}}/apps/{APP_ID}.png"; done'
+                    ),
+                    "gtk-update-icon-cache -f -t /app/share/icons/hicolor",
                     (
                         "rm -f /app/share/applications/net.lutris.Lutris.desktop "
                         "/app/share/applications/net.lutris.Lutris1.desktop"

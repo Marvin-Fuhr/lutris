@@ -18,8 +18,13 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install Flatpak build tools
         run: |
+          for source in /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources; do
+            if [ -f "$source" ]; then
+              sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' "$source"
+            fi
+          done
           sudo apt-get update
-          sudo apt-get install -y flatpak flatpak-builder python3
+          sudo apt-get install -y --no-install-recommends flatpak flatpak-builder python3 librsvg2-common
       - name: Build the preview bundle
         run: dbus-run-session -- ./packaging/flatpak/build.sh
       - name: Calculate checksum

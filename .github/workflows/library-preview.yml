@@ -2,6 +2,9 @@ name: Build Library Preview Flatpak
 
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - "library-preview-v*"
 
 permissions:
   contents: read
@@ -9,6 +12,8 @@ permissions:
 jobs:
   flatpak:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: Install Flatpak build tools
@@ -17,8 +22,26 @@ jobs:
           sudo apt-get install -y flatpak flatpak-builder python3
       - name: Build the preview bundle
         run: dbus-run-session -- ./packaging/flatpak/build.sh
+      - name: Calculate checksum
+        working-directory: dist
+        run: sha256sum LutrisLibrary.flatpak > LutrisLibrary.flatpak.sha256
       - uses: actions/upload-artifact@v4
         with:
           name: LutrisLibrary-flatpak
-          path: dist/LutrisLibrary.flatpak
+          path: |
+            dist/LutrisLibrary.flatpak
+            dist/LutrisLibrary.flatpak.sha256
           if-no-files-found: error
+      - name: Publish preview release
+        if: startsWith(github.ref, 'refs/tags/library-preview-v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_COMMIT: ${{ github.sha }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            dist/LutrisLibrary.flatpak dist/LutrisLibrary.flatpak.sha256 \
+            --verify-tag --target "$RELEASE_COMMIT" --prerelease \
+            --title "Lutris Library Preview ${RELEASE_TAG#library-preview-}" \
+            --notes-file packaging/flatpak/release-notes.md

@@ -55,7 +55,10 @@ Manifest und lokales Flatpak-Repository liegen unter `build/flatpak`.
 
 Alternativ kann nach dem Push im eigenen GitHub-Fork unter Actions der Workflow
 „Build Library Preview Flatpak“ manuell gestartet werden. Er lädt das Bundle als
-Artifact `LutrisLibrary-flatpak` hoch. Dieser Workflow wurde hier noch nicht ausgeführt.
+Artifact `LutrisLibrary-flatpak` hoch. Beim Push eines Tags `library-preview-v*`
+baut derselbe Workflow das Paket und veröffentlicht es mit Prüfsumme automatisch
+als GitHub-Vorabversion. Dafür verwendet er das kurzlebige `github.token` des
+Workflows; ein persönlicher Token ist nicht erforderlich.
 
 Die Testversion hat die eigene App-ID `io.github.MarvinFuhr.LutrisLibrary`, einen
 eigenen Menüeintrag und eigene Konfigurations-/Kontodaten unter

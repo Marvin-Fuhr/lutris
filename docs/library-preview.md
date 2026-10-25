@@ -71,6 +71,21 @@ an denselben Spieledateien sind deshalb zwischen beiden Versionen sichtbar.
 
 ## Funktionsprüfung auf dem Desktop
 
+Für den nächsten Release vorbereitet (noch nicht veröffentlicht): Cover wachsen
+beim Überfahren mit der Maus in etwa 180 ms auf 108 %, bleiben dort und schrumpfen
+beim Verlassen wieder. Die Rastergeometrie bleibt dabei stabil. Mausrad-Schritte
+werden über etwa 160 ms interpoliert; Touchpad-Gesten und horizontales Scrollen
+verwenden weiterhin GTKs native Verarbeitung. Scrollbar und Tastatur können einen
+laufenden Mausrad-Übergang sofort unterbrechen. Wenn Animationen systemweit
+abgeschaltet sind, erfolgt der Hover-Wechsel sofort und das Scrollen bleibt nativ.
+
+Die Logo-Konvertierung wird mit `python3 utils/update_branding.py ORIGINAL.png`
+ausgeführt, sobald die Originaldatei vorliegt. Das Werkzeug ersetzt die bestehenden
+App-/Dateityp-Icons sowie Logo-, Platzhalter- und Splash-Dateien. PNGs behalten ihre
+jeweiligen Größen und RGBA-Kodierung; SVGs behalten ihre ursprünglichen Abmessungen
+und enthalten das Originalbild als eingebettetes PNG. Rasterbilder werden dabei
+nicht nachgezeichnet oder als echte Vektorgrafik ausgegeben.
+
 1. Bei GOG, Epic und/oder weiteren verwendeten Diensten anmelden. Nach erfolgreicher
    Anmeldung wird die Bibliothek geladen. Die Schaltfläche zum Aktualisieren neben
    „Installed only“ lädt alle verbundenen Bibliotheken erneut; auch beim Start wird

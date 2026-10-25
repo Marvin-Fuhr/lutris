@@ -103,7 +103,7 @@ jobs:
       - name: Install Ubuntu dependencies
         run: |
           sudo apt update
-          sudo apt-get install libdbus-1-dev pkg-config libgirepository-2.0-dev python3-gi-cairo libcairo2-dev libgtk-3-dev libgdk-pixbuf-2.0-dev libgnome-desktop-3-dev libwebkit2gtk-4.1-dev gettext
+          sudo apt-get install libdbus-1-dev pkg-config libgirepository-2.0-dev python3-gi-cairo libcairo2-dev libgtk-3-dev libgdk-pixbuf-2.0-dev libgnome-desktop-3-dev libwebkit2gtk-4.1-dev gettext xvfb xauth
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
@@ -114,4 +114,4 @@ jobs:
       - name: Run Unit Test
         run: |
           . .venv/bin/activate
-          nose2 --exclude-ci
+          xvfb-run -a nose2 --exclude-ci

@@ -2,7 +2,7 @@
 # pylint:disable=using-constant-test
 # pylint:disable=comparison-with-callable
 from gettext import gettext as _
-from math import floor
+from math import ceil, floor
 
 import gi
 
@@ -123,6 +123,14 @@ class GridViewCellRendererImage(Gtk.CellRenderer):
         self._inset_fractions = {}
         self._expected_width = None
         self._expected_height = None
+        self.hover_zoom = 1.0
+        self.hover_fractions = {}
+
+    def set_hover_fraction(self, game_id, fraction):
+        if fraction > 0:
+            self.hover_fractions[game_id] = min(1.0, fraction)
+        else:
+            self.hover_fractions.pop(game_id, None)
 
     def inset_game(self, game_id: str, fraction: float) -> bool:
         """This function indicates that a particular game should be displayed inset by a certain fraction of
@@ -219,15 +227,19 @@ class GridViewCellRendererImage(Gtk.CellRenderer):
 
     def do_get_preferred_width(self, widget):
         if self.is_library_view() and self._expected_width:
-            return self._expected_width, self._expected_width
-        size = self._get_preferred_size()
-        return size[0], size[0]
+            width = self._expected_width
+        else:
+            width = self._get_preferred_size()[0]
+        width = ceil(width * self.hover_zoom)
+        return width, width
 
     def do_get_preferred_height(self, widget):
         if self.is_library_view() and self._expected_height:
-            return self._expected_height, self._expected_height
-        size = self._get_preferred_size()
-        return size[1], size[1]
+            height = self._expected_height
+        else:
+            height = self._get_preferred_size()[1]
+        height = ceil(height * self.hover_zoom)
+        return height, height
 
     def do_render(self, cr, widget, background_area, cell_area, flags):
         media_path = resolve_media_path(self.media_paths) if self.media_paths else None
@@ -257,13 +269,13 @@ class GridViewCellRendererImage(Gtk.CellRenderer):
 
                 # Adjust context to place media_area at 0,0 and scale it.
                 inset_fraction = self._inset_fractions.get(self.game_id) or 0.0 if self.game_id else 0.0
-                if inset_fraction > 0:
-                    media_area.x += (media_area.width * inset_fraction) / 2
-                    media_area.y += (media_area.height * inset_fraction) / 2
-                    cr.translate(media_area.x, media_area.y)
-                    cr.scale(1 - inset_fraction, 1 - inset_fraction)
-                else:
-                    cr.translate(media_area.x, media_area.y)
+                hover_fraction = self.hover_fractions.get(self.game_id, 0.0)
+                scale = (1 - inset_fraction) * (1 + (self.hover_zoom - 1) * hover_fraction)
+                cr.translate(
+                    media_area.x + media_area.width * (1 - scale) / 2,
+                    media_area.y + media_area.height * (1 - scale) / 2,
+                )
+                cr.scale(scale, scale)
 
                 media_area.x = 0
                 media_area.y = 0
@@ -281,7 +293,7 @@ class GridViewCellRendererImage(Gtk.CellRenderer):
                     cr.paint_with_alpha(alpha)
                 cr.restore()
 
-                if inset_fraction > 0:
+                if scale != 1:
                     # Since we are restoring a scale change _again_ we need
                     # to update the layout with that change too, or the other text
                     # in the view will be broken. So lame.
@@ -369,7 +381,7 @@ class GridViewCellRendererImage(Gtk.CellRenderer):
         # Horizontal centering (same for both library and service views)
         media_area.x = round(cell_area.x + (cell_area.width - width) / 2)
 
-        if self.is_library_view():
+        if self.is_library_view() or self.hover_zoom > 1:
             # For library view, center vertically within cell height
             media_area.y = round(cell_area.y + (cell_area.height - height) / 2)
         else:

@@ -237,7 +237,9 @@ class GridViewCellRendererImage(Gtk.CellRenderer):
         media_width = media_path.width
         media_height = media_path.height
         path = media_path.path
-        alpha = 1 if self.is_installed else 100 / 255
+        # Ownership is independent of installation. Keep the artwork readable;
+        # the caption in the library communicates installation state explicitly.
+        alpha = 1 if self.is_installed else 0.9
 
         if media_width > 0 and media_height > 0 and path:
             surface = self._get_cached_surface_by_path(widget, path, size=(media_width, media_height))

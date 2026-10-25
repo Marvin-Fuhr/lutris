@@ -63,6 +63,7 @@ from lutris.gui.widgets.progress_box import ProgressBox, ProgressInfo
 from lutris.gui.widgets.sidebar import LutrisSidebar, SidebarRow
 from lutris.gui.widgets.stock_icon_image import StockIconImage
 from lutris.gui.widgets.utils import load_icon_theme, open_uri, set_cursor_by_name
+from lutris.library import get_library_services, get_owned_service_games, merge_library_games, split_library_id
 from lutris.runtime import ComponentUpdater, RuntimeUpdater
 from lutris.search import GameSearch
 from lutris.search_predicate import NotPredicate
@@ -86,8 +87,8 @@ class LutrisWindow(Gtk.ApplicationWindow, DialogLaunchUIDelegate, DialogInstallU
     """Handler class for main window signals."""
 
     default_view_type = "grid"
-    default_width = 800
-    default_height = 600
+    default_width = 1280
+    default_height = 800
 
     __gtype_name__ = "LutrisWindow"
     games_stack: Gtk.Stack = GtkTemplate.Child()
@@ -122,7 +123,8 @@ class LutrisWindow(Gtk.ApplicationWindow, DialogLaunchUIDelegate, DialogInstallU
         )
         update_desktop_icons()
         load_icon_theme()
-        self.set_wmclass("net.lutris.Lutris", "net.lutris.Lutris")
+        application_id = os.environ.get("LUTRIS_APPLICATION_ID", "net.lutris.Lutris")
+        self.set_wmclass(application_id, application_id)
         self.application = application
         self.window_x, self.window_y = self.get_position()
         self.restore_window_position()
@@ -161,6 +163,9 @@ class LutrisWindow(Gtk.ApplicationWindow, DialogLaunchUIDelegate, DialogInstallU
             self.maximize()
         self.init_template()
         self._init_actions()
+        self.get_style_context().add_class("library-window")
+        self._library_loading = set()
+        self._init_library_toolbar()
 
         # Per-game progress functions for launch-status (e.g. umu runtime
         # downloads). Keyed by game id so we can retrieve the same function
@@ -231,6 +236,46 @@ class LutrisWindow(Gtk.ApplicationWindow, DialogLaunchUIDelegate, DialogInstallU
         self.sidebar.selected_category = selected_category.split(":", maxsplit=1) if selected_category else None
 
         schedule_at_idle(self.sync_library, delay_seconds=1.0)
+        schedule_at_idle(self.reload_library_accounts, delay_seconds=2.0)
+
+    def _init_library_toolbar(self):
+        """Keep filtering explicit: the default shelf includes uninstalled games."""
+        toolbar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12, visible=True)
+        toolbar.get_style_context().add_class("library-toolbar")
+        title_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4, visible=True)
+        self.library_title = Gtk.Label(label=_("Library"), xalign=0, visible=True)
+        self.library_title.get_style_context().add_class("library-title")
+        self.library_count = Gtk.Label(xalign=0, visible=True)
+        self.library_count.get_style_context().add_class("dim-label")
+        title_box.pack_start(self.library_title, False, False, 0)
+        title_box.pack_start(self.library_count, False, False, 0)
+        toolbar.pack_start(title_box, True, True, 0)
+        installed = Gtk.CheckButton(label=_("Installed only"), visible=True)
+        installed.set_action_name("win.show-installed-only")
+        toolbar.pack_start(installed, False, False, 0)
+        refresh = Gtk.Button.new_from_icon_name("view-refresh-symbolic", Gtk.IconSize.BUTTON)
+        refresh.set_tooltip_text(_("Refresh connected libraries"))
+        refresh.connect("clicked", lambda _button: self.reload_library_accounts())
+        refresh.show()
+        toolbar.pack_start(refresh, False, False, 0)
+        parent = self.games_stack.get_parent().get_parent()
+        parent.pack_start(toolbar, False, False, 0)
+        parent.reorder_child(toolbar, 0)
+
+    def reload_library_accounts(self):
+        """Refresh owned catalogs without requiring a visit to every sidebar row."""
+        for service in get_library_services():
+            row = self.sidebar.service_rows.get(service.id)
+            if row:
+                service = row.service
+            if not service.is_loading and service.id not in self._library_loading:
+                self._library_loading.add(service.id)
+
+                def on_reloaded(error, service_id=service.id):
+                    self._library_loading.discard(service_id)
+                    self._service_reloaded_cb(error)
+
+                service.start_reload(on_reloaded)
 
     def on_busy_started(self):
         self._is_busy = True
@@ -737,6 +782,14 @@ class LutrisWindow(Gtk.ApplicationWindow, DialogLaunchUIDelegate, DialogInstallU
 
         games = games_db.get_games(filters=filters, excludes=excludes)
         games = self.filter_games([game for game in games if game["id"] in category_game_ids], searches=searches)
+        if category == "all" and not self.filters.get("runner") and not self.filters.get("platform"):
+            # Compare against *all* local rows so a hidden, filtered or installed
+            # entry cannot reappear as a second service tile.
+            owned = merge_library_games(games_db.get_games(), get_owned_service_games())
+            remote = [game for game in owned if game.get("_library_id")]
+            if self.filters.get("installed") and not search.has_component("installed"):
+                remote = []
+            games.extend(self.filter_games(remote, searches=searches))
         return self.apply_view_sort(games)
 
     def get_sql_filters(self) -> dict[str, str]:
@@ -859,6 +912,14 @@ class LutrisWindow(Gtk.ApplicationWindow, DialogLaunchUIDelegate, DialogInstallU
                 raise error  # bounce any error against the backstop
 
             games, game_store = result
+            installed_count = sum(bool(game.get("installed")) for game in games)
+            self.library_count.set_text(
+                _("%(total)d games · %(installed)d installed") % {"total": len(games), "installed": installed_count}
+            )
+            row = self.sidebar.get_selected_row()
+            self.library_title.set_text(
+                self.service.name if self.service else (_("Library") if not row or row.id == "all" else row.name)
+            )
 
             placeholder_text = self._get_search_placeholder_text(games)
             self.search_entry.set_placeholder_text(placeholder_text)
@@ -1183,8 +1244,7 @@ class LutrisWindow(Gtk.ApplicationWindow, DialogLaunchUIDelegate, DialogInstallU
 
     def on_service_logout(self, service):
         self.update_notification()
-        if self.service and service.id == self.service.id:
-            self.update_store()
+        self.update_store()
         return True
 
     def on_lutris_account_connected(self):
@@ -1379,7 +1439,10 @@ class LutrisWindow(Gtk.ApplicationWindow, DialogLaunchUIDelegate, DialogInstallU
 
         games = []
         for game_id in game_ids:
-            if self.service:
+            library_id = split_library_id(game_id)
+            if library_id:
+                game = ServiceGameCollection.get_game(*library_id)
+            elif self.service:
                 game = ServiceGameCollection.get_game(self.service.id, game_id)
             else:
                 game = games_db.get_game_by_field(game_id, "id")
@@ -1501,14 +1564,18 @@ class LutrisWindow(Gtk.ApplicationWindow, DialogLaunchUIDelegate, DialogInstallU
 
     def on_game_activated(self, _view, game_id):
         """Handles view activations (double click, enter press)"""
-        if self.service:
-            logger.debug("Looking up %s game %s", self.service.id, game_id)
-            db_game = games_db.get_game_for_service(self.service.id, game_id)
+        library_id = split_library_id(game_id)
+        service = services.SERVICES[library_id[0]]() if library_id else self.service
+        if library_id:
+            game_id = library_id[1]
+        if service:
+            logger.debug("Looking up %s game %s", service.id, game_id)
+            db_game = games_db.get_game_for_service(service.id, game_id)
 
             if db_game and db_game["installed"]:
                 game_id = db_game["id"]
             else:
-                game_id = self.service.install_by_id(game_id)
+                game_id = service.install_by_id(game_id)
 
         if game_id:
             game = Game(game_id)

@@ -16,6 +16,16 @@ are automated and can be modified through user made scripts.
 Running Lutris
 ==============
 
+Library preview fork
+--------------------
+
+For the desktop cover library and the separate Flatpak preview build, see
+``docs/library-preview.md``. Run ``./packaging/flatpak/build.sh`` from the
+repository root to build ``dist/LutrisLibrary.flatpak``.
+
+From source
+-----------
+
 If you have not installed Lutris through your package manager and are using the
 source package, it is recommended that you install lutris at least once, even an
 older version to have all dependencies available.

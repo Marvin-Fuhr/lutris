@@ -1,0 +1,3 @@
+#!/bin/sh
+export LUTRIS_APPLICATION_ID=io.github.MarvinFuhr.LutrisLibrary
+exec /usr/bin/python3 /app/lib/lutris-library/bin/lutris "$@"

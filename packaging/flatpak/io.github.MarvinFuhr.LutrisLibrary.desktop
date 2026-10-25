@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Lutris Library Preview
+Comment=Unified game library for the Lutris fork
+Exec=lutris-library %U
+Icon=io.github.MarvinFuhr.LutrisLibrary
+Terminal=false
+Categories=Game;
+MimeType=x-scheme-handler/lutris;
+StartupNotify=true
+StartupWMClass=io.github.MarvinFuhr.LutrisLibrary

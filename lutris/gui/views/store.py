@@ -77,6 +77,7 @@ class GameStore(GObject.Object):
         self.service = service
         self.service_media = service_media
         self._rows_by_id: dict[str, Gtk.TreeRowReference] = {}
+        self.sources_by_id: dict[str, str] = {}
 
         # The timestamp columns must be INT64; a bare 'int' is a 32-bit gint, which
         # overflows for any date past 2038 (or sooner, if a game was recorded while the
@@ -175,6 +176,7 @@ class GameStore(GObject.Object):
         self.add_item(store_item)
 
     def add_item(self, store_item):
+        self.sources_by_id[store_item.id] = store_item.service
         tree_iter = self.store.append(
             (
                 store_item.id,

@@ -9,6 +9,8 @@ from lutris.game_actions import GameActions, get_game_actions
 from lutris.gui.widgets import EMPTY_NOTIFICATION_REGISTRATION
 from lutris.gui.widgets.contextual_menu import ContextualMenu
 from lutris.gui.widgets.utils import MEDIA_CACHE_INVALIDATED, get_application
+from lutris.library import split_library_id
+from lutris.services import SERVICES
 from lutris.util.jobs import schedule_repeating_at_idle
 from lutris.util.log import logger
 from lutris.util.path_cache import MISSING_GAMES
@@ -101,16 +103,19 @@ class GameView:
 
         games = []
         for game_id in game_ids:
-            if self.service:
-                db_game = get_game_for_service(self.service.id, game_id)
+            library_id = split_library_id(game_id)
+            service = SERVICES[library_id[0]]() if library_id else self.service
+            appid = library_id[1] if library_id else game_id
+            if service:
+                db_game = get_game_for_service(service.id, appid)
 
                 if db_game:
                     if db_game["id"]:
                         games.append(_get_game_by_id(db_game["id"]))
                 else:
-                    service_game = ServiceGameCollection.get_game(self.service.id, game_id)
+                    service_game = ServiceGameCollection.get_game(service.id, appid)
                     if service_game:
-                        games.append(Game.create_empty_service_game(service_game, self.service))
+                        games.append(Game.create_empty_service_game(service_game, service))
             elif game_id:
                 games.append(_get_game_by_id(game_id))
 

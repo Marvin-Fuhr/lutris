@@ -93,3 +93,98 @@
 .cuddledcheckbox label {
   margin-right: 0px
 }
+/* Desktop library: restrained chrome, generous cover shelves, clear selection. */
+.library-window {
+  background-color: #1b2838;
+  color: #d6dfeb;
+}
+
+.library-window headerbar {
+  background-image: linear-gradient(to bottom, #283b50, #202e40);
+  color: #e9f1fa;
+  border-bottom: 1px solid #101923;
+}
+
+.library-window .lutris-sidebar {
+  background-color: #171f2b;
+  color: #b8c7d9;
+  min-width: 220px;
+}
+
+.library-window .lutris-sidebar row {
+  border-radius: 4px;
+  margin: 2px 6px;
+}
+
+.library-window .lutris-sidebar row:selected {
+  background-color: #30465e;
+  color: #ffffff;
+}
+
+.library-toolbar {
+  padding: 24px 26px 18px;
+  background-image: linear-gradient(to right, #26394e, #1b2838);
+  border-bottom: 1px solid #304155;
+}
+
+.library-title {
+  font-size: 24px;
+  font-weight: 300;
+  color: #ffffff;
+}
+
+.library-toolbar .dim-label {
+  color: #a2b5ca;
+}
+
+.library-grid {
+  background-color: #1b2838;
+  color: #d6dfeb;
+}
+
+.library-grid cell {
+  border-radius: 5px;
+}
+
+.library-grid cell:hover {
+  background-color: #30465e;
+}
+
+.library-grid cell:selected {
+  background-color: #345c80;
+  color: white;
+  outline: 2px solid #66c0f4;
+  outline-offset: -2px;
+}
+
+.library-window entry {
+  background-color: #172230;
+  color: #e9f1fa;
+  border-color: #3b5068;
+}
+
+.library-window headerbar button,
+.library-toolbar button {
+  background-image: none;
+  background-color: #30465e;
+  border-color: #415a73;
+  color: #e9f1fa;
+  text-shadow: none;
+  box-shadow: none;
+}
+
+.library-window headerbar button:hover,
+.library-toolbar button:hover {
+  background-color: #3b5a78;
+  border-color: #66c0f4;
+}
+
+.library-window headerbar button:checked,
+.library-toolbar button:checked {
+  background-color: #345c80;
+}
+
+.library-window treeview {
+  background-color: #1b2838;
+  color: #d6dfeb;
+}

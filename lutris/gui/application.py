@@ -74,7 +74,7 @@ if TYPE_CHECKING:
 class LutrisApplication(Gtk.Application):
     def __init__(self) -> None:
         super().__init__(
-            application_id="net.lutris.Lutris",
+            application_id=os.environ.get("LUTRIS_APPLICATION_ID", "net.lutris.Lutris"),
             flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE,
             register_session=True,
         )
@@ -91,7 +91,7 @@ class LutrisApplication(Gtk.Application):
         DOWNLOAD_QUEUE_COMPLETED.register(self.on_download_queue_completed)
 
         GLib.set_application_name(_("Lutris"))
-        GLib.set_prgname("net.lutris.Lutris")
+        GLib.set_prgname(self.get_application_id() or "net.lutris.Lutris")
         self.force_updates = False
         self.css_provider = Gtk.CssProvider.new()
         self.window: LutrisWindow | None = None

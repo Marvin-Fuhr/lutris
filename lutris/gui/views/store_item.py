@@ -117,6 +117,8 @@ class StoreItem:
         """Game internal ID"""
         # Return a unique identifier for the game.
         # Since service games are not related to lutris, use the appid
+        if self._game_data.get("_library_id"):
+            return self._game_data["_library_id"]
         if "service_id" not in self._game_data:
             if "appid" in self._game_data:
                 _id = self._game_data["appid"]
@@ -196,6 +198,20 @@ class StoreItem:
 
     def get_media_paths(self) -> list[MediaPath]:
         """Returns the path to the image file for this item"""
+        if self._game_data.get("_library_id"):
+            # A combined library has a single tile size but each account stores
+            # its artwork in a different cache. Prefer portrait artwork, falling
+            # back to a fitted banner/icon without stretching it into a cover.
+            service = SERVICES[self._game_data["service"]]()
+            medias = [media() for media in service.medias.values()]
+            medias.sort(key=lambda media: media.size[1] / media.size[0], reverse=True)
+            paths = [
+                path.scale_to_fit(self.service_media.size)
+                for media in medias
+                for path in media.get_possible_media_paths(self.slug)
+            ]
+            return self.service_media.get_possible_media_paths(self.slug) + paths
+
         if self._game_data.get("icon"):
             icon = self._game_data["icon"]
             if isinstance(icon, MediaPath):

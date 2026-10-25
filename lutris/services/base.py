@@ -62,7 +62,7 @@ class LutrisIcon(LutrisBanner):
 
 class LutrisCoverart(ServiceMedia):
     service = "lutris"
-    size = (264, 352)
+    size = (240, 360)
     file_patterns = ["%s.jpg", "%s.png"]
     dest_path = settings.COVERART_PATH
     api_field = "coverart"
@@ -73,7 +73,7 @@ class LutrisCoverart(ServiceMedia):
 
 
 class LutrisCoverartMedium(LutrisCoverart):
-    size = (176, 234)
+    size = (160, 240)
 
 
 SERVICE_GAMES_LOADING = NotificationSource()
@@ -144,9 +144,19 @@ class BaseService:
 
             try:
                 self.is_loading = True
-
-                self.wipe_game_cache()
-                self.load()
+                previous_games = ServiceGameCollection.get_for_service(self.id)
+                try:
+                    self.wipe_game_cache()
+                    self.load()
+                except Exception:
+                    # Network failures must not empty the combined library. The
+                    # previous catalog remains usable offline until the next sync.
+                    sql.db_delete(settings.DB_PATH, "service_games", "service", self.id)
+                    for game in previous_games:
+                        # Other accounts may have claimed a freed SQLite rowid
+                        # during the network request. Service/appid is identity.
+                        sql.db_insert(settings.DB_PATH, "service_games", {k: v for k, v in game.items() if k != "id"})
+                    raise
                 self.load_icons()
                 self.add_installed_games()
                 logger.debug("'%s' games reloaded", self.name)
